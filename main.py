@@ -1,5 +1,5 @@
-from telegram import Update
-from telegram.ext import Application, ApplicationBuilder, CommandHandler, ContextTypes, Defaults
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Application, ApplicationBuilder, CommandHandler, ContextTypes, Defaults, CallbackQueryHandler
 import os
 from dotenv import load_dotenv
 from functools import wraps
@@ -59,19 +59,114 @@ async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 @restricted  # /wake
 async def wol(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # send_magic_packet(os.getenv("WoLmac"), ip_address=os.getenv("WoLIP"), port=9) # Deprecated
-    wake(os.getenv("WoLmac"), host=os.getenv("WoLIP"), port=9)
-    await update.message.reply_text(f'Magic package sent\\!')
+    wake(os.getenv("WoLmac"), host=os.getenv("WoLIP"), port=9, interface=os.getenv("WoLIP"))
+    await update.message.reply_text(f'Magic package sent!')
 
 @restricted
 async def restartBot(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text(f"The bot is restarting\\.\\.\\.")
+    await update.message.reply_text(f"The bot is restarting...")
     exit()
 
-app = ApplicationBuilder().token(os.getenv("botToken")).defaults(Defaults(parse_mode=ParseMode.MARKDOWN_V2)).post_init(onStart).build()
+# Gemini from Google AI Studio generated start
+@restricted
+async def server(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not context.args:
+        await update.message.reply_text(
+            "Please provide an argument: `/server shutdown` or `/server reboot`",
+            parse_mode="Markdown",
+        )
+        return
+    action = context.args[0].lower()
 
+    if action == "shutdown":
+        text = (
+            "⚠️ **WARNING: The server is about to POWER OFF.**\n"
+            "You will NOT be able to access any functions of this bot, including the `/wake` command, "
+            "until the server is booted manually.\n\n"
+            "Are you sure you want to proceed?"
+        )
+        callback_action = "server_shutdown"
+    elif action in ["reboot", "restart"]:
+        text = (
+            "⚠️ **WARNING: The server is about to RESTART/REBOOT.**\n"
+            "The bot will be temporarily unavailable until the system finishes rebooting.\n\n"
+            "Are you sure you want to proceed?"
+        )
+        callback_action = "server_reboot"
+    else:
+        await update.message.reply_text(
+            "Invalid argument. Please use `shutdown` or `reboot`.",
+            parse_mode="Markdown",
+        )
+        return
+
+    keyboard = [
+        [
+            InlineKeyboardButton("Cancel", callback_data="cancel_server_action"),
+            InlineKeyboardButton("Confirm", callback_data=f"confirm_{callback_action}"),
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    await update.message.reply_text(
+        text, reply_markup=reply_markup, parse_mode="Markdown"
+    )
+
+
+@restricted
+async def server_button_callback(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> None:
+    # Processing button click
+    query = update.callback_query
+    await query.answer()
+
+    data = query.data
+
+    if data == "cancel_server_action":
+        await query.edit_message_text("Operation canceled.")
+        return
+
+    if data == "confirm_server_shutdown":
+        await query.edit_message_text("Shutting down the server...")
+        os.system("sudo shutdown now")
+
+    elif data == "confirm_server_reboot":
+        await query.edit_message_text("Rebooting the server...")
+        os.system("sudo reboot")
+
+@restricted
+async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    help_text = (
+        "Available commands:\n"
+        "/hello - Greet the bot.\n"
+        "/ping - Check if the bot is online.\n"
+        "/wake - Wake the computer/device using Wake-on-LAN.\n"
+        "/restartBot - Restart the bot.\n"
+        "/server <functions> - Server management functions.\n"
+        "        shutdown - Shutdown the server.\n"
+        "        reboot - Reboot the server.\n"
+        "        restart - Alias for reboot.\n"
+        "        Aliases: /svr, /srv\n"
+    )
+    await update.message.reply_text(help_text)
+# Gemini from Google AI Studio generated end
+
+# app = ApplicationBuilder().token(os.getenv("botToken")).defaults(Defaults(parse_mode=ParseMode.MARKDOWN_V2)).post_init(onStart).build()
+app = ApplicationBuilder().token(os.getenv("botToken")).defaults(Defaults(parse_mode=ParseMode.MARKDOWN)).post_init(onStart).build()
+
+# shutdown / reboot confirmation buttons handler. Generated with Gemini from Google AI Studio.
+app.add_handler(
+    CallbackQueryHandler(
+        server_button_callback, pattern=r"^(confirm_server_|cancel_server_action)"
+    )
+)
 app.add_handler(CommandHandler("hello", hello))
 app.add_handler(CommandHandler("ping", ping))
 app.add_handler(CommandHandler("wake", wol))
 app.add_handler(CommandHandler("restartBot", restartBot))
-# app.add_handler(CommandHandler(filters.TEXT & (~filters.COMMAND), hello))
+app.add_handler(CommandHandler("server", server))
+app.add_handler(CommandHandler("svr", server))
+app.add_handler(CommandHandler("srv", server))
+app.add_handler(CommandHandler("help", help))
 app.run_polling()

@@ -16,26 +16,8 @@ As for why don't I use C++ since I'm mostly prefer developing with C++, that's b
 | `/ping`  | Reply "Pong!". To confirm whether the bot is still online.|
 | `/wake`  | Wake the computer / device you've setup to do wake on lan. |
 | `/restartBot` | Restart the bot. |
-
-### Todos
-
-- [ ] `/server <functions>` (Alias: `/svr`, `/srv`)
-  - [ ] `/server reboot` Reboot the server with confirmation message. Confirm and replying `Yes` etc. is required
-  - [ ] `/server shutdown` Shutdown the server with confirmation message. Confirm and replying `Yes` etc. is required
-  - [ ] `/server status` Show the status of the server, including:
-    - CPU usage % and temperature
-    - RAM usage GB + MB, %, free ram GB + MB, %, total RAM GB float, GB + MB
-    - Up time
-  - [ ] Being not `@restricted` **ONLY FOR `/server status`**, but only show the rough status like
-    - Low usage, but it's not always like that, so you should leave.
-    - High CPU usage, so it won't be able to accept your request. You should better leave.
-    - High RAM usage, so it's not having enough capacity to accept your request. You should leave.
-    - High usage on EVERYTHING, so you need to leave.
-- [ ] `/calc <expression>` Calculator. Using the safer `eval` to handle it
-- [ ] `/random <choice>`
-  - [ ] `/random dice` Random number between 1 and 6. Also the default value if not giving any arguments
-  - [ ] `/random yn` Randomly choose between Yes and No
-  - [ ] `/random <int> <int>` Randomly choose between equals two numbers
+| `/server <functions>` | Server management functions. `<functions>` allow `reboot` and `shutdown` for now. |
+| `help` | Show the help message. |
 
 ## Setup
 
@@ -78,6 +60,26 @@ WoLmac=00-11-DE-AD-BE-EF
 ```
 
 There are already `.env.template` file given in the repo. If the setup command is fully executed, the file should be renamed to `.env`.
+
+### Todos
+
+- [ ] `/server <functions>` (Alias: `/svr`, `/srv`)
+  - [X] `/server reboot` Reboot the server with confirmation message. Confirm and replying `Yes` etc. is required
+  - [X] `/server shutdown` Shutdown the server with confirmation message. Confirm and replying `Yes` etc. is required
+  - [ ] `/server status` Show the status of the server, including:
+    - CPU usage % and temperature
+    - RAM usage GB + MB, %, free ram GB + MB, %, total RAM GB float, GB + MB
+    - Up time
+  - [ ] Being not `@restricted` **ONLY FOR `/server status`**, but only show the rough status like
+    - Low usage, but it's not always like that, so you should leave.
+    - High CPU usage, so it won't be able to accept your request. You should better leave.
+    - High RAM usage, so it's not having enough capacity to accept your request. You should leave.
+    - High usage on EVERYTHING, so you need to leave.
+- [ ] `/calc <expression>` Calculator. Using the safer `eval` to handle it
+- [ ] `/random <choice>`
+  - [ ] `/random dice` Random number between 1 and 6. Also the default value if not giving any arguments
+  - [ ] `/random yn` Randomly choose between Yes and No
+  - [ ] `/random <int> <int>` Randomly choose between equals two numbers
 
 ## AI Usage
 

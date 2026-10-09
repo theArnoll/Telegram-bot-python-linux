@@ -3,7 +3,8 @@ set -e
 
 SERVICE_NAME="tgbot"
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
-CURRENT_USER=$(whoami)
+
+CURRENT_USER="${SUDO_USER:-$(whoami)}"
 CURRENT_DIR=$(pwd)
 PYTHON_BIN="${CURRENT_DIR}/tgbot/bin/python3"
 MAIN_PY="${CURRENT_DIR}/main.py"
@@ -15,12 +16,17 @@ if [ ! -f "$PYTHON_BIN" ]; then
     exit 1
 fi
 
+echo "Modifying sudoers file to allow ${CURRENT_USER} to run shutdown and reboot commands..."
+
+echo "${CURRENT_USER} ALL=(ALL) NOPASSWD: /usr/sbin/shutdown, /usr/sbin/reboot, /usr/bin/systemctl poweroff, /usr/bin/systemctl reboot" | sudo tee /etc/sudoers.d/${CURRENT_USER}-power > /dev/null && sudo chmod 0440 /etc/sudoers.d/${CURRENT_USER}-power && sudo visudo -c -f /etc/sudoers.d/${CURRENT_USER}-power
+
 echo "Creating ${SERVICE_FILE}..."
 
 sudo bash -c "cat <<EOF > ${SERVICE_FILE}
 [Unit]
 Description=Telegram Bot Service
-After=network.target
+Wants=network-online.target
+After=network.target network-online.target
 
 [Service]
 Type=simple
@@ -29,8 +35,9 @@ WorkingDirectory=${CURRENT_DIR}
 ExecStart=${PYTHON_BIN} ${MAIN_PY}
 Restart=always
 RestartSec=5
+# 確保 print() 的訊息會即時送到 journalctl
+Environment=PYTHONUNBUFFERED=1
 EnvironmentFile=-${CURRENT_DIR}/.env
-# Add '-' means even if .env file isn't exit, it won't cause error
 
 [Install]
 WantedBy=multi-user.target
@@ -39,7 +46,7 @@ EOF"
 echo "Reloading systemd..."
 sudo systemctl daemon-reload
 
-echo "Enabling auto run on start and starting service..."
+echo "Enabling auto run on boot and starting service..."
 sudo systemctl enable --now ${SERVICE_NAME}.service
 
 echo "=== Setup finished. Service status: ==="
